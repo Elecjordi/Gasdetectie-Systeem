@@ -1,0 +1,17 @@
+1x ESP32 Mircocontroller
+23x wires that you need
+1x Led green
+1x Led orange
+2x Led red
+4x resistor 220 Ohm
+3x resistor 22k Ohm
+1x resistor 3K3 Ohm
+3x Transistor BC548C
+2x Oled display 
+1x capacitor 10uf
+1x fan
+1x gas sensor 
+1x flashing light
+1x beacon
+1x 12V voeding 
+1x Blynk app
