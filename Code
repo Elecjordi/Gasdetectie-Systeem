@@ -1,0 +1,186 @@
+#include <SPI.h>
+#include <Wire.h>
+#include <MFRC522.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <WiFi.h>
+#include <WiFiClient.h>
+#include <BlynkSimpleEsp32.h>
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+
+#define OLED_RESET     4
+Adafruit_SSD1306 display1(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+Adafruit_SSD1306 display2(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+char auth[] = "ohhSkPfVyHOPQzW8JTWY6VZ2sd10PaFI";     // Wifi gegevens
+char ssid[] = "telenet-51B5C";
+char pass[] = "Ep4srp9JFPEy";
+
+// settings PWM eigenschappen
+const int pwmPin = 15;
+const int freq = 5000;
+const int pwmChannel = 0;
+const int resolutie = 8;
+// Sensor pin en uitlezing
+int sensorPin = 34;
+int val = 0;
+int Uitlezing;
+// pinnen schakeltrappen
+int Zwaailicht = 25;
+int Sirene = 33;
+// Blynk inlezing leds
+WidgetLED groeneLed(V1);
+WidgetLED orangeLed(V2);
+WidgetLED rodeLed(V3);
+WidgetLED tweederodeLed(V4);
+
+void setup() {
+  Serial.begin(9600);           //  setup serial
+  SPI.begin();                  //  initialisatie SPI bus
+
+  Blynk.begin(auth, ssid, pass); // initialisatie Blynk
+
+  ledcSetup(pwmChannel, freq, resolutie);     // Instellen van PWM funcies
+  ledcAttachPin(pwmPin, pwmChannel);          // Instellen van GPIO channel
+
+  display1.begin(SSD1306_SWITCHCAPVCC, 0x3C); // initialisatie Display 1
+  display1.clearDisplay();
+  display1.setTextColor(WHITE);
+  display1.setTextSize(1, 2);
+
+  display2.begin(SSD1306_SWITCHCAPVCC, 0x3D); // initialisatie Display 2
+  display2.clearDisplay();
+  display2.setTextColor(WHITE);
+  display2.setTextSize(1, 2);
+  // Pinnen
+  pinMode(12, OUTPUT);           // Orange Led pin
+  pinMode(13, OUTPUT);           // Groene Led pin
+  pinMode(27, OUTPUT);           // Rode Led pin
+  pinMode(26, OUTPUT);           // 2de Rode Led pin
+  pinMode(34, INPUT);            // sensorPin
+  pinMode(25, OUTPUT);           // Zwaailicht
+  pinMode(33, OUTPUT);           // Sirene
+  pinMode(pwmPin, OUTPUT);       // Ventilator
+}
+
+void loop() {
+  val = analogRead(sensorPin);          //  Uitlezen van sensorPin
+  Uitlezing = (val - 550) / 32;
+  Serial.println("Gas Detectie");
+  Serial.println(val);
+  delay(1000);
+
+  // Alarmen
+  if (val < 300)                        // Meter in fout
+  {
+    digitalWrite(12, HIGH);             // Pinnen aansturen
+    digitalWrite(25, HIGH);
+    ledcWrite(pwmChannel, 0);           // Ventilator uit
+    orangeLed.on();
+    // Display 1                        // Printen op display 1
+    display1.clearDisplay();
+    display1.setCursor(0, 0);
+    display1.println("Gas Detectie: ");
+    display1.print(Uitlezing);
+    display1.println(" %LEL");
+    display1.println();
+    display1.println("Meter in fout");
+    display1.display();
+    // Display 2                        // Printen op display 2
+    display2.clearDisplay();
+    display2.setCursor(0, 0);
+    display2.println("Ventilatie: ");
+    display2.print("uit");
+    display2.display();
+  } else {
+    digitalWrite(12, LOW);              // Pinnen aansturen
+    digitalWrite(25, LOW);
+    orangeLed.off();
+  }
+
+  if (val > 480 && val < 1200)          // Goede werking meter
+  {
+    digitalWrite(13, HIGH);
+    groeneLed.on();                     // Blynk Led Groen
+    ledcWrite(pwmChannel, 0);           // Ventilator uit
+    // Display 1                        // Printen op display 1
+    display1.clearDisplay();
+    display1.setCursor(0, 0);
+    display1.println("Gas Detectie: ");
+    display1.print(Uitlezing);
+    display1.println(" %LEL");
+    display1.println();
+    display1.println("Toestand OK");
+    display1.display();
+    // Display 2                        // Printen op display 2
+    display2.clearDisplay();
+    display2.setCursor(0, 0);
+    display2.println("Ventilatie: ");
+    display2.print("uit");
+    display2.display();
+  } else {
+    digitalWrite(13, LOW);              // Pin aansturen
+    groeneLed.off();                    // Blynk Led Groen
+  }
+
+  if (val > 1200 && val < 2000)         // Voor alarm
+  {
+    digitalWrite(27, HIGH);             // Rode led voor alarm
+    digitalWrite(25, HIGH);             // Zwaailicht
+    ledcWrite(pwmChannel, 127);         // Ventilator aan
+    rodeLed.on();                       // Blynk Led Voor alarm
+    // Display 1                        // Printen op display 1
+    display1.clearDisplay();
+    display1.setCursor(0, 0);
+    display1.println("Gas Detectie: ");
+    display1.print(Uitlezing);
+    display1.println(" %LEL");
+    display1.println();
+    display1.println("Voor alarm");
+    display1.display();
+    // Display 2                        // Printen op display 2
+    display2.clearDisplay();
+    display2.setCursor(0, 0);
+    display2.println("Ventilatie: ");
+    display2.print("50%");
+    display2.display();
+  } else {
+    digitalWrite(27, LOW);              // Rode Led Voor alarm
+    digitalWrite(25, LOW);              // Zwaailicht
+    rodeLed.off();                      // Blynk Led Voor alarm
+  }
+
+  if (val > 2000)
+  {
+    digitalWrite(26, HIGH);             // Pinnen aansturen
+    digitalWrite(25, HIGH);
+    digitalWrite(33, HIGH);
+    tweederodeLed.on();                 // Blynk Led Hoofd alarm
+    ledcWrite(pwmChannel, 255);         // Ventilator aan
+    // Display 1                        // Printen op display 1
+    display1.clearDisplay();
+    display1.setCursor(0, 0);
+    display1.println("Gas Detectie: ");
+    display1.print(Uitlezing);
+    display1.println(" %LEL");
+    display1.println();
+    display1.println("Hoofd alarm");
+    display1.display();
+    // Display 2                        // Printen op display 2
+    display2.clearDisplay();
+    display2.setCursor(0, 0);
+    display2.println("Ventilatie: ");
+    display2.print("100%");
+    display2.display();
+  } else {
+    digitalWrite(26, LOW);              // Pinnen aansturen
+    digitalWrite(25, LOW);
+    digitalWrite(33, LOW);
+    tweederodeLed.off();                // Blynk Led Hoofd alarm
+  }
+  //Blynk                               // Uitlezing op Blynk
+  Blynk.run();
+  Blynk.virtualWrite(V0, Uitlezing);
+  Blynk.virtualWrite(V5, Uitlezing);
+}
