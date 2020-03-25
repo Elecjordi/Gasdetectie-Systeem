@@ -13,9 +13,9 @@
 Adafruit_SSD1306 display1(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 Adafruit_SSD1306 display2(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-char auth[] = "ohhSkPfVyHOPQzW8JTWY6VZ2sd10PaFI";     // Wifi gegevens
-char ssid[] = "telenet-51B5C";
-char pass[] = "Ep4srp9JFPEy";
+char auth[] = "Your auth Token";     // Wifi gegevens
+char ssid[] = "Your wifi name";
+char pass[] = "Your password";
 
 // settings PWM eigenschappen
 const int pwmPin = 15;
