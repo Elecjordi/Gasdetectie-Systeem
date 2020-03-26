@@ -7,4 +7,6 @@ If the value of the gas continues to increase, one reaches 50% LEL at the main a
 The red led of the pre-alarm goes over to the red led of the main alarm. This also happens on the display and the Blynk app. Also appears on the display the message main alarm. The fan is controlled to 100%. This is also made visible on the 2nd display.  
 When something goes wrong with the meter it goes to a value of 2mA. For this an orange LED will light up and on the display and Blynk the message meter goes wrong. On the Blynk app I also made a bar graph which increases with the measured value.
 All data can be seen on the system itself, on the created displays and on the Blynk app.
+
 Created by Jordi De Greef  
+![Image of Gasdetectie systeem](90993749_255237232170613_6511057755153891328_n.jpg)
